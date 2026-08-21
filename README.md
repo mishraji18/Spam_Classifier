@@ -9,7 +9,7 @@ I'm a passionate **Full Stack Developer** 🚀 from INDIA, with a strong interes
 - 🔭 I’m currently working on: **A Recipe Chatbot**
 - 🌱 I’m currently learning: **Python,JS,MySQL**
 - 👯 I’m looking to collaborate on: ** Exciting Full Stack Projects and Hackathons**
-- 💬 Ask me about: **Web Development, Cloud, and AI**
+- 💬 Ask me about: **Web Development, Cloud, and AI** 
 - 📫 How to reach me: **240253@kit.ac.in**
 - ⚡ Fun fact: **I love solving puzzles and exploring new technologies!**
 
