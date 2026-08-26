@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sorting Room — Spam Classifier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #1b1e2b;
+    --panel: #242838;
+    --panel-hi: #2c3145;
+    --paper: #efe9da;
+    --paper-shadow: #d8d0ba;
+    --red: #b23a2e;
+    --green: #2f6b4f;
+    --text-bright: #f2eee2;
+    --text-muted: #9296ab;
+    --line: #3a3f56;
+    --amber: #d1a24a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--ink);
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(255,255,255,0.03), transparent 40%),
+      radial-gradient(circle at 85% 85%, rgba(255,255,255,0.025), transparent 45%);
+    color: var(--text-bright);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+  ::selection{ background: var(--amber); color: var(--ink); }
+
+  .wrap{ max-width: 960px; margin: 0 auto; padding: 48px 24px 96px; }
+
+  /* ---------- Header ---------- */
+  header{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom: 40px; flex-wrap:wrap; gap:12px; }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand .mark{
+    width: 34px; height: 34px; border: 2px solid var(--amber); border-radius: 50%;
+    display:flex; align-items:center; justify-content:center; font-family:'Special Elite', cursive;
+    font-size: 15px; color: var(--amber); flex-shrink:0;
+  }
+  .brand h1{ font-family:'Special Elite', cursive; font-size: 20px; letter-spacing: 0.04em; margin:0; font-weight:400; }
+  .brand p{ margin:2px 0 0; font-size: 12px; color: var(--text-muted); letter-spacing: 0.08em; text-transform:uppercase; }
+  .route-code{ font-family:'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-muted); text-align:right; line-height:1.6; }
+
+  /* ---------- Hero: the sorting desk ---------- */
+  .desk{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .desk::before{
+    content:"";
+    position:absolute; inset:0;
+    background: repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+    pointer-events:none;
+  }
+  .desk h2{
+    font-family:'Special Elite', cursive; font-weight:400; font-size: 22px; margin: 0 0 8px;
+  }
+  .desk .sub{ color: var(--text-muted); font-size: 14px; margin: 0 0 28px; max-width: 52ch; line-height:1.5; }
+
+  .stage{ display:flex; gap: 32px; align-items:flex-start; flex-wrap: wrap; }
+  .input-col{ flex: 1 1 320px; min-width: 280px; }
+  .stamp-col{ flex: 0 0 220px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:14px; }
+
+  textarea{
+    width: 100%; min-height: 110px; resize: vertical;
+    background: var(--ink); color: var(--text-bright);
+    border: 1px solid var(--line); border-radius: 3px;
+    padding: 14px; font-family:'IBM Plex Mono', monospace; font-size: 13.5px; line-height:1.55;
+  }
+  textarea:focus{ outline: none; border-color: var(--amber); }
+  textarea::placeholder{ color: #5c6079; }
+
+  .row{ display:flex; gap:10px; margin-top: 12px; flex-wrap:wrap; }
+  button{
+    font-family:'IBM Plex Mono', monospace; font-size: 12.5px; letter-spacing: 0.04em;
+    text-transform: uppercase; cursor: pointer; border-radius: 3px; padding: 11px 18px;
+    border: 1px solid var(--line); background: var(--panel-hi); color: var(--text-bright);
+    transition: border-color 0.15s ease, transform 0.1s ease;
+  }
+  button:hover{ border-color: var(--amber); }
+  button:active{ transform: translateY(1px); }
+  button.primary{ background: var(--amber); color: var(--ink); border-color: var(--amber); font-weight:600; }
+  button.primary:hover{ opacity: 0.92; }
+  button:disabled{ opacity: 0.45; cursor: default; }
+  .sample-btn{ font-size: 11px; padding: 7px 10px; background: transparent; color: var(--text-muted); }
+  .sample-btn:hover{ color: var(--text-bright); }
+  #sampleRow{ margin-top: 14px; display:flex; flex-wrap:wrap; gap:6px; }
+
+  /* the envelope / stamp visual */
+  .envelope{
+    width: 190px; height: 130px; background: var(--paper);
+    border-radius: 2px; position: relative; box-shadow: 0 6px 0 var(--paper-shadow), 0 10px 18px rgba(0,0,0,0.35);
+  }
+  .envelope::before{
+    content:""; position:absolute; inset:0;
+    background:
+      linear-gradient(135deg, transparent 49%, rgba(0,0,0,0.06) 50%, transparent 51%),
+      linear-gradient(-135deg, transparent 49%, rgba(0,0,0,0.06) 50%, transparent 51%);
+    clip-path: polygon(0 0, 50% 46%, 100% 0, 100% 100%, 0 100%);
+  }
+  .stamp-mark{
+    position: absolute; top: 50%; left: 50%;
+    font-family: 'Special Elite', cursive; font-size: 22px; letter-spacing: 0.08em;
+    padding: 6px 14px; border: 3px solid currentColor; border-radius: 6px;
+    transform: translate(-50%,-50%) rotate(-11deg) scale(0.4);
+    opacity: 0; white-space: nowrap; pointer-events:none;
+  }
+  .stamp-mark.show{ animation: stampDown 0.42s cubic-bezier(.2,1.4,.4,1) forwards; }
+  @keyframes stampDown{
+    0%{ opacity:0; transform: translate(-50%,-50%) rotate(-11deg) scale(2.4); }
+    55%{ opacity: 1; }
+    75%{ transform: translate(-50%,-50%) rotate(-9deg) scale(0.92); }
+    100%{ opacity: 1; transform: translate(-50%,-50%) rotate(-10deg) scale(1); }
+  }
+  .stamp-mark.spam{ color: var(--red); }
+  .stamp-mark.ham{ color: var(--green); }
+
+  .verdict{ font-family:'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-muted); text-align:center; min-height: 34px; }
+  .verdict b{ color: var(--text-bright); }
+
+  /* ---------- Sections ---------- */
+  section.block{ margin-top: 44px; }
+  .block-head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom: 16px; }
+  .block-head h3{ font-family:'Special Elite', cursive; font-weight:400; font-size: 16px; margin:0; }
+  .block-head .n{ font-family:'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-muted); }
+
+  .stat-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 12px; }
+  .stat-card{
+    background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 16px 18px;
+  }
+  .stat-card .label{ font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 6px; }
+  .stat-card .value{ font-family:'IBM Plex Mono', monospace; font-size: 24px; color: var(--amber); }
+
+  table{ width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td{ text-align:left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  th{ color: var(--text-muted); font-weight: 500; font-size: 11px; text-transform:uppercase; letter-spacing:0.06em; }
+  td.msg{ color: var(--text-bright); }
+  .tag{ font-family:'IBM Plex Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 10px; display:inline-block; }
+  .tag.spam{ background: rgba(178,58,46,0.18); color: #e08072; }
+  .tag.ham{ background: rgba(47,107,79,0.2); color: #7fc9a2; }
+
+  .cm-table{ max-width: 360px; }
+  .cm-table td, .cm-table th{ text-align:center; }
+  .cm-table .rowlabel{ text-align:left; color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
+
+  footer{ margin-top: 56px; color: var(--text-muted); font-size: 12px; font-family:'IBM Plex Mono', monospace; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+
+  .status-dot{ width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:6px; background:#5c6079; }
+  .status-dot.ok{ background: var(--green); }
+  .status-dot.bad{ background: var(--red); }
+
+  @media (max-width: 640px){
+    .stage{ flex-direction: column; }
+    .stamp-col{ align-self: center; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="mark">SR</div>
+      <div>
+        <h1>The Sorting Room</h1>
+        <p>Spam / Ham triage desk</p>
+      </div>
+    </div>
+    <div class="route-code" id="healthStatus"><span class="status-dot"></span>connecting…</div>
+  </header>
+
+  <div class="desk">
+    <h2>Drop a message on the desk</h2>
+    <p class="sub">TF-IDF + Multinomial Naive Bayes reads the message and stamps a verdict. Type your own, or pull one off the conveyor below.</p>
+
+    <div class="stage">
+      <div class="input-col">
+        <textarea id="msgInput" placeholder="e.g. Win a free cruise, click here to claim your prize now!"></textarea>
+        <div class="row">
+          <button class="primary" id="classifyBtn">Stamp it</button>
+          <button id="clearBtn">Clear</button>
+        </div>
+        <div id="sampleRow"></div>
+      </div>
+
+      <div class="stamp-col">
+        <div class="envelope">
+          <div class="stamp-mark" id="stampMark">SPAM</div>
+        </div>
+        <div class="verdict" id="verdictText">Awaiting a message…</div>
+      </div>
+    </div>
+  </div>
+
+  <section class="block">
+    <div class="block-head">
+      <h3>Desk performance</h3>
+      <span class="n" id="statsN"></span>
+    </div>
+    <div class="stat-grid" id="statGrid"><div class="stat-card"><div class="label">Loading</div><div class="value">—</div></div></div>
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <h3>Confusion matrix</h3>
+      <span class="n">rows = actual, cols = predicted</span>
+    </div>
+    <table class="cm-table" id="cmTable"></table>
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <h3>Training log</h3>
+      <span class="n" id="msgN"></span>
+    </div>
+    <table id="msgTable">
+      <thead><tr><th style="width:70%">Message</th><th>Label</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <footer>
+    <span>Backend: <code id="apiBase">http://localhost:5000</code></span>
+    <span>TF-IDF · Multinomial Naive Bayes · scikit-learn</span>
+  </footer>
+
+</div>
+
+<script>
+const API_BASE = "http://localhost:5000";
+document.getElementById('apiBase').textContent = API_BASE;
+
+const els = {
+  health: document.getElementById('healthStatus'),
+  input: document.getElementById('msgInput'),
+  classifyBtn: document.getElementById('classifyBtn'),
+  clearBtn: document.getElementById('clearBtn'),
+  stampMark: document.getElementById('stampMark'),
+  verdictText: document.getElementById('verdictText'),
+  statGrid: document.getElementById('statGrid'),
+  statsN: document.getElementById('statsN'),
+  cmTable: document.getElementById('cmTable'),
+  msgTable: document.querySelector('#msgTable tbody'),
+  msgN: document.getElementById('msgN'),
+  sampleRow: document.getElementById('sampleRow'),
+};
+
+const SAMPLES = [
+  "Win a free cruise, click here to claim your prize now!",
+  "Hey, can you review my code before the standup?",
+  "URGENT: verify your account or it will be suspended",
+  "Let's grab coffee sometime next week",
+];
+
+function pct(x){ return (x*100).toFixed(1) + '%'; }
+
+async function checkHealth(){
+  try{
+    const r = await fetch(`${API_BASE}/api/health`);
+    const d = await r.json();
+    els.health.innerHTML = `<span class="status-dot ok"></span>desk online · model ${d.model_trained ? 'loaded' : 'missing'}`;
+  }catch(e){
+    els.health.innerHTML = `<span class="status-dot bad"></span>backend unreachable — start app.py on :5000`;
+  }
+}
+
+async function loadStats(){
+  try{
+    const r = await fetch(`${API_BASE}/api/stats`);
+    const d = await r.json();
+    els.statsN.textContent = `${d.train_size} train / ${d.test_size} test`;
+
+    const spamF1 = d.report.spam ? d.report.spam['f1-score'] : 0;
+    const hamF1 = d.report.ham ? d.report.ham['f1-score'] : 0;
+
+    els.statGrid.innerHTML = `
+      <div class="stat-card"><div class="label">Accuracy</div><div class="value">${pct(d.accuracy)}</div></div>
+      <div class="stat-card"><div class="label">Spam F1</div><div class="value">${pct(spamF1)}</div></div>
+      <div class="stat-card"><div class="label">Ham F1</div><div class="value">${pct(hamF1)}</div></div>
+      <div class="stat-card"><div class="label">Total labeled</div><div class="value">${(d.class_counts.spam||0)+(d.class_counts.ham||0)}</div></div>
+    `;
+
+    const [ [aa, ab], [ba, bb] ] = d.confusion_matrix.matrix;
+    els.cmTable.innerHTML = `
+      <thead><tr><th></th><th>Pred: ham</th><th>Pred: spam</th></tr></thead>
+      <tbody>
+        <tr><td class="rowlabel">Actual: ham</td><td>${aa}</td><td>${ab}</td></tr>
+        <tr><td class="rowlabel">Actual: spam</td><td>${ba}</td><td>${bb}</td></tr>
+      </tbody>
+    `;
+  }catch(e){
+    els.statGrid.innerHTML = `<div class="stat-card"><div class="label">Error</div><div class="value" style="font-size:14px;color:var(--red)">no connection</div></div>`;
+  }
+}
+
+async function loadMessages(){
+  try{
+    const r = await fetch(`${API_BASE}/api/messages`);
+    const rows = await r.json();
+    els.msgN.textContent = `${rows.length} messages`;
+    els.msgTable.innerHTML = rows.map(row => `
+      <tr>
+        <td class="msg">${escapeHtml(row.text)}</td>
+        <td><span class="tag ${row.label}">${row.label}</span></td>
+      </tr>
+    `).join('');
+  }catch(e){
+    els.msgTable.innerHTML = `<tr><td colspan="2">Could not load training log.</td></tr>`;
+  }
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function classify(){
+  const text = els.input.value.trim();
+  if(!text) return;
+
+  els.classifyBtn.disabled = true;
+  els.verdictText.textContent = 'Reading the message…';
+  els.stampMark.classList.remove('show','spam','ham');
+
+  try{
+    const r = await fetch(`${API_BASE}/api/predict`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({text})
+    });
+    if(!r.ok) throw new Error('predict failed');
+    const d = await r.json();
+
+    els.stampMark.textContent = d.label.toUpperCase();
+    els.stampMark.classList.add(d.label, 'show');
+
+    const spamConf = d.confidence.spam ?? 0;
+    const hamConf = d.confidence.ham ?? 0;
+    els.verdictText.innerHTML = `Stamped <b>${d.label.toUpperCase()}</b> — spam ${pct(spamConf)} · ham ${pct(hamConf)}`;
+  }catch(e){
+    els.verdictText.textContent = 'Backend unreachable — is app.py running on :5000?';
+  }finally{
+    els.classifyBtn.disabled = false;
+  }
+}
+
+els.classifyBtn.addEventListener('click', classify);
+els.clearBtn.addEventListener('click', () => {
+  els.input.value = '';
+  els.stampMark.classList.remove('show','spam','ham');
+  els.verdictText.textContent = 'Awaiting a message…';
+});
+els.input.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter' && (e.metaKey || e.ctrlKey)) classify();
+});
+
+els.sampleRow.innerHTML = SAMPLES.map((s,i) => `<button class="sample-btn" data-i="${i}">“${s.slice(0,26)}${s.length>26?'…':''}”</button>`).join('');
+els.sampleRow.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('click', () => { els.input.value = SAMPLES[btn.dataset.i]; classify(); });
+});
+
+checkHealth();
+loadStats();
+loadMessages();
+</script>
+</body>
+</html>
