@@ -4,7 +4,7 @@ A small full-stack app around your existing TF-IDF + Multinomial Naive Bayes
 spam/ham classifier: a Flask JSON API on the backend, and a single-page
 "mail sorting desk" UI on the frontend that stamps  each message SPAM or HAM. 
  
-```   
+```    
 spam-classifier-app/ 
 ├── backend/ 
 │   ├── app.py            # Flask API (wraps your original spam_classifier.py logic)
