@@ -9,7 +9,7 @@ spam-classifier-app/
 ├── backend/ 
 │   ├── app.py            # Flask API (wraps your original spam_classifier.py logic)
 │   └── requirements.txt
-└── frontend/ 
+└── frontend/  
     └── index.html         # static UI — no build step, just open in a browser
 ```
 
