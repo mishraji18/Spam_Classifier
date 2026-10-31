@@ -8,7 +8,7 @@ spam/ham classifier: a Flask JSON API on the backend, and a single-page
 spam-classifier-app/     
 ├── backend/    
 │   ├── app.py            # Flask API (wraps your original spam_classifier.py logic)
-│   └── requirements.txt
+│   └── requirements.txt 
 └── frontend/  
     └── index.html         # static UI — no build step, just open in a browser
 ```
